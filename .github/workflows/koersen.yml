@@ -1,0 +1,60 @@
+name: Koersen ophalen
+
+on:
+  schedule:
+    # Werkdagen om 17:30 UTC (18:30 of 19:30 Nederlandse tijd).
+    # GitHub kan geplande runs enkele minuten tot uren vertragen.
+    - cron: "30 17 * * 1-5"
+  workflow_dispatch:   # handmatig starten via het tabblad Actions
+
+permissions:
+  contents: write      # nodig om data/*.csv terug te committen
+
+concurrency:
+  group: koersen
+  cancel-in-progress: false
+
+jobs:
+  ophalen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Repository uitchecken
+        uses: actions/checkout@v4
+
+      - name: R installeren
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true   # snelle, voorgebouwde pakketten
+
+      - name: Systeembibliotheken voor R-pakketten
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev
+
+      - name: R-pakketten installeren (met cache)
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-pakketten-${{ runner.os }}-v1
+
+      - name: Ontbrekende R-pakketten bijinstalleren
+        run: |
+          Rscript -e 'dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE, showWarnings = FALSE)'
+          Rscript -e 'pk <- c("rvest","xml2","dplyr","stringr","readr"); nieuw <- pk[!pk %in% rownames(installed.packages())]; if (length(nieuw)) install.packages(nieuw)'
+
+      - name: Koersen ophalen
+        run: Rscript koersen.R
+
+      - name: CSV-bestanden terug committen
+        run: |
+          git config user.name  "koersen-bot"
+          git config user.email "koersen-bot@users.noreply.github.com"
+          git add data/koersen.csv data/laatste.csv
+          if git diff --cached --quiet; then
+            echo "Geen wijzigingen om te committen."
+          else
+            git commit -m "Koersen $(date -u +%F)"
+            git push
+          fi
