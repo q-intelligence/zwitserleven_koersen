@@ -2,6 +2,7 @@
 # ------------------------------------------------------------------
 # Bron   : https://www.zwitserleven.nl/en/about-zwitserleven/sustainability/funds/
 # Uitvoer: data/koersen.csv  (volledige historie, 1 rij per fonds per koersdatum)
+#          kolommen: fonds, slug, datum, jaar, koers, opgehaald_op
 #          data/laatste.csv  (alleen de meest recente koersen)
 #
 # De pagina toont alleen de laatste koers. De historie bouw je op doordat dit
@@ -57,11 +58,12 @@ haal_koersen_op <- function(url = URL) {
       fonds = str_squish(str_replace_all(fonds, "\u00AD", "")),
       datum = as.Date(datum_txt, format = "%d-%m-%Y"),
       # Engelse notatie op deze pagina: '€ 1,229.29' -> 1229.29
+      jaar  = as.integer(format(datum, "%Y")),
       koers = as.numeric(str_replace_all(koers_txt, "[^0-9.]", "")),
       opgehaald_op = format(Sys.time(), tz = "UTC", usetz = TRUE)
     ) %>%
     filter(!is.na(datum), !is.na(koers)) %>%
-    select(fonds, slug, datum, koers, opgehaald_op)
+    select(fonds, slug, datum, jaar, koers, opgehaald_op)
 }
 
 # ------------------------------------------------------------------
@@ -86,7 +88,13 @@ voeg_samen <- function(nieuw, pad = CSV_HISTORIE) {
   } else {
     alles <- nieuw
   }
-  arrange(alles, fonds, datum)
+
+  # jaar altijd uit de datum afleiden, ook voor rijen uit een oud bestand
+  # zonder jaar-kolom, en de kolomvolgorde vastleggen
+  alles %>%
+    mutate(jaar = as.integer(format(datum, "%Y"))) %>%
+    select(fonds, slug, datum, jaar, koers, opgehaald_op) %>%
+    arrange(fonds, datum)
 }
 
 # ------------------------------------------------------------------
