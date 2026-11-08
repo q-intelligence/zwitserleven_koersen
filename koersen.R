@@ -76,6 +76,7 @@ voeg_samen <- function(nieuw, pad = CSV_HISTORIE) {
       col_types = cols(
         fonds = col_character(), slug = col_character(),
         datum = col_date(format = "%Y-%m-%d"), koers = col_double(),
+        jaar = col_character(),   
         opgehaald_op = col_character()
       ),
       show_col_types = FALSE
