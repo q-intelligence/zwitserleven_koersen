@@ -92,7 +92,7 @@ voeg_samen <- function(nieuw, pad = CSV_HISTORIE) {
   # jaar altijd uit de datum afleiden, ook voor rijen uit een oud bestand
   # zonder jaar-kolom, en de kolomvolgorde vastleggen
   alles %>%
-    mutate(jaar = as.integer(format(datum, "%Y"))) %>%
+    mutate(jaar = format(datum, "%Y")) %>%
     select(fonds, slug, datum, jaar, koers, opgehaald_op) %>%
     arrange(fonds, datum)
 }
