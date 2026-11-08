@@ -58,7 +58,7 @@ haal_koersen_op <- function(url = URL) {
       fonds = str_squish(str_replace_all(fonds, "\u00AD", "")),
       datum = as.Date(datum_txt, format = "%d-%m-%Y"),
       # Engelse notatie op deze pagina: '€ 1,229.29' -> 1229.29
-      jaar  = as.integer(format(datum, "%Y")),
+      jaar = format(datum, "%Y"),
       koers = as.numeric(str_replace_all(koers_txt, "[^0-9.]", "")),
       opgehaald_op = format(Sys.time(), tz = "UTC", usetz = TRUE)
     ) %>%
